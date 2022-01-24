@@ -1,0 +1,8 @@
+At each moment in time:
+1. Any live cell with 2 or 3 live neighbours lives
+2. Any dead cell with exactly 3 live neighbours becomes a live cell
+3. All other cells die
+
+Live is 1, dead is 0
+
+Each cell has 8 neighbours surrounding it
