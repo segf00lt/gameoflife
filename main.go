@@ -106,6 +106,9 @@ func (b *Board) Iter() {
 	b.m = bprime.m
 }
 
+/*
+* credit to https://github.com/pinpox for this Print function
+*/
 func (b *Board) Print() {
 	fmt.Print("╔")
 	for x := 1; x <= b.w; x++ {
