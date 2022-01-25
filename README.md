@@ -5,5 +5,5 @@ in one week.
 
 ## TODO
 
-- Research game of life and become familiar with the algorithms
-  involved
+- Generate random seed
+- Allow command line input
