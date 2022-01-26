@@ -5,4 +5,6 @@ in one week.
 
 ## TODO
 
-- Allow command line input
+- Allow command line input of width, height, initial population density and
+  maybe a seed
+- Render in opengl window, allow dynamic resizing of window and grid
