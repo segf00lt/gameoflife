@@ -5,5 +5,4 @@ in one week.
 
 ## TODO
 
-- Generate random seed
 - Allow command line input

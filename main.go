@@ -3,79 +3,69 @@ package main
 import (
 	"fmt"
 	"time"
+	"math/rand"
 	"os"
 	"os/exec"
 )
 
 const (
-	HEIGHT = 40
-	WIDTH = 50
+	HEIGHT = 45
+	WIDTH = 45
 )
 
-var SEED [][]int = [][]int {
-	{2, 1}, {3, 1},        {5, 1}, {6, 1},
-		{3, 2},        {5, 2},
-		{3, 3},        {5, 3},
-	{2, 4}, {3, 4},        {5, 4}, {6, 4},
+// python style modulo
+func pymod(a, b int) int {
+	m := a % b
 
-	{26, 1}, {3, 1},        {6, 1}, {6, 1},
-		{27, 2},        {6, 2},
-		{27, 3},        {6, 3},
-	{26, 4}, {3, 4},        {6, 4}, {6, 4},
+	if m < 0 {
+		m += b
+	}
 
-
-	{17, 3},
-        {18, 1},
-        {18, 3},
-        {19, 2},
-        {19, 3},
-
-	{14, 3},
-        {15, 1},
-        {15, 3},
-        {16, 2},
-        {16, 3},
+	return m
 }
 
 type Board struct {
-	m [][]bool // Board cell matrix
+	c []bool // Board cells
 	h, w int // height and width
+	l int // length of cell array
 }
 
-func BoardInit(h, w int, seed [][]int) Board {
-	b := Board { h: h, w: w }
-	b.m = make([][]bool, h, h)
-	for i,_ := range b.m {
-		b.m[i] = make([]bool, w, w)
-	}
-
-	// seed life
-	for _,pair := range seed {
-		i := pair[0]
-		j := pair[1]
-		b.m[i][j] = true
-	}
+func BoardInit(h, w int) Board {
+	b := Board { h: h, w: w, l: h * w }
+	b.c = make([]bool, b.l, b.l)
 
 	return b
 }
 
-func (b *Board) In(i, j int) bool {
-	return (i >= 0 &&
-		i < b.h &&
-		j >= 0 &&
-		j < b.w)
+func (b *Board) X(i int) int {
+	return pymod(i, b.w)
 }
 
-func (b *Board) Neighbours(i, j int) int {
-	offset := []int {-1, 0, 1}
+func (b *Board) Y(i int) int {
+	return (i - b.X(i)) / b.h
+}
+
+// get index of cell (x,y)
+func (b *Board) Index(x, y int) int {
+	return pymod(x, b.w) + pymod(y, b.h) * b.w
+}
+
+// set state of cell at (x,y)
+func (b *Board) Set(x, y int, val bool) {
+	b.c[b.Index(x, y)] = val
+}
+
+// get state of cell at (x,y)
+func (b *Board) Get(x, y int) bool {
+	return b.c[b.Index(x, y)]
+}
+
+func (b *Board) Neighbours(x, y int) int {
 	var sum int = 0
 
-	for _,off1 := range offset {
-		for _,off2 := range offset {
-			if !b.In(i + off1, j + off2) {
-				continue
-			}
-			if !(off1 == 0 && off2 == 0) && b.m[i + off1][j + off2] {
+	for offy := -1; offy <= 1; offy++ {
+		for offx := -1; offx <= 1; offx++ {
+			if b.Get(x + offx, y + offy) {
 				sum += 1
 			}
 		}
@@ -85,66 +75,95 @@ func (b *Board) Neighbours(i, j int) int {
 }
 
 func (b *Board) Iter() {
-	bprime := BoardInit(b.h, b.w, nil)
+	bprime := BoardInit(b.h, b.w)
 
 	// this is stupidly slow
-	for i := 0; i < b.h; i++ {
-		for j := 0; j < b.w; j++ {
-			n := b.Neighbours(i, j)
+	for i,_ := range b.c {
+		x := b.X(i)
+		y := b.Y(i)
+		n := b.Neighbours(x, y)
 
-			if b.m[i][j] && (n < 2 || n > 3) {
-				bprime.m[i][j] = false
-			} else if b.m[i][j] && (n == 2 || n == 3) {
-				bprime.m[i][j] = true
-			} else if !b.m[i][j] && n == 3 {
-				bprime.m[i][j] = true
-			}
-
+		switch n {
+		case 3:
+			bprime.Set(x, y, true)
+			break
+		case 4:
+			bprime.Set(x, y, b.Get(x, y))
+			break
+		default:
+			bprime.Set(x, y, false)
+			break
 		}
 	}
 
-	b.m = bprime.m
+	b.c = bprime.c
 }
 
 /*
-* credit to https://github.com/pinpox for this Print function
+* credit to https://github.com/pinpox
 */
 func (b *Board) Print() {
 	fmt.Print("╔")
-	for x := 1; x <= b.w; x++ {
+	for x := 0; x < b.w; x++ {
 		fmt.Print("══")
 	}
 	fmt.Println("╗")
 
-	for _,r := range b.m {
-		fmt.Print("║")
-		for _,c := range r {
-			if c {
-				fmt.Print("██")
-			} else {
-				fmt.Print("  ")
-			}
+	for i,c := range b.c {
+		if b.X(i) == 0 {
+			fmt.Print("║")
 		}
-		fmt.Println("║")
+
+		if c {
+			fmt.Print("██")
+		} else {
+			fmt.Print("  ")
+		}
+
+		if b.X(i) == (b.w - 1) {
+			fmt.Println("║")
+		}
 	}
 
 	fmt.Print("╚")
-	for x := 1; x <= b.w; x++ {
+	for x := 0; x < b.w; x++ {
 		fmt.Print("══")
 	}
 	fmt.Println("╝")
 }
 
+/*
+* credit to https://github.com/pinpox
+*/
+func (b *Board) Populate(percent int) {
+	n := (percent * b.l) / 100
+
+	for i := 0; i < n; i++ {
+		b.c[i] = true
+	}
+
+	cells := b.c
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	// shuffle shuffle shuffle
+	for i := b.l; i > 0; i-- {
+		random := r.Intn(i)
+		cells[i - 1], cells[random] = cells[random], cells[i - 1]
+	}
+	b.c = cells
+}
+
 func main() {
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	b := BoardInit(HEIGHT, WIDTH, SEED)
+	b := BoardInit(HEIGHT, WIDTH)
+	b.Populate(50)
 
 	for i := 0; ; i++ {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
 		cmd.Run()
 		b.Print()
 		b.Iter()
 		fmt.Println("generation:", i)
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 }

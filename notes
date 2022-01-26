@@ -6,3 +6,10 @@ At each moment in time:
 Live is 1, dead is 0
 
 Each cell has 8 neighbours surrounding it
+
+[-w,-1] [-w,0] [-w,+1]
+[0, -1] [0, 0] [0, +1]
+[+w,-1] [+w,0] [+w,+1]
+
+123
+456
