@@ -5,6 +5,6 @@ in one week.
 
 ## TODO
 
-- Allow command line input of width, height, initial population density and
-  maybe a seed
-- Render in opengl window, allow dynamic resizing of window and grid
+- Load seed files
+- Function to dump board state
+- Study entropy of Conway's Life (read more about information theory)
